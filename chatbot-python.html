@@ -1,0 +1,907 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PyBot — Tutor de Python</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d1117;
+    --surface: #161b22;
+    --surface2: #21262d;
+    --border: #30363d;
+    --accent: #3b82f6;
+    --accent-light: #60a5fa;
+    --accent-dim: rgba(59,130,246,0.12);
+    --accent-green: #4ade80;
+    --accent-yellow: #fbbf24;
+    --text: #e6edf3;
+    --text-muted: #8b949e;
+    --text-dim: #484f58;
+    --user-bg: #1c2333;
+    --bot-bg: #161b22;
+    --success: #3fb950;
+    --font-display: 'Syne', sans-serif;
+    --font-body: 'DM Sans', sans-serif;
+    --font-code: 'Courier New', 'Consolas', monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--font-body);
+    background: var(--bg);
+    color: var(--text);
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* ── Header ── */
+  header {
+    padding: 14px 24px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: var(--surface);
+    flex-shrink: 0;
+  }
+
+  .bot-avatar {
+    width: 40px; height: 40px;
+    border-radius: 10px;
+    background: var(--accent-dim);
+    border: 1px solid rgba(59,130,246,0.4);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+  }
+
+  .bot-info h1 {
+    font-family: var(--font-display);
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.01em;
+  }
+
+  .bot-info p {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 1px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .status-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--success);
+    display: inline-block;
+    animation: pulse 2.5s infinite;
+    flex-shrink: 0;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.35; }
+  }
+
+  .header-right {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .subject-badge {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 6px;
+    background: var(--accent-dim);
+    color: var(--accent-light);
+    border: 1px solid rgba(59,130,246,0.25);
+    font-family: var(--font-code);
+    letter-spacing: 0.02em;
+  }
+
+  /* Python version pill */
+  .version-badge {
+    font-size: 10px;
+    font-weight: 500;
+    padding: 3px 8px;
+    border-radius: 6px;
+    background: rgba(251,191,36,0.1);
+    color: var(--accent-yellow);
+    border: 1px solid rgba(251,191,36,0.2);
+    font-family: var(--font-code);
+  }
+
+  #clear-btn {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    font-size: 12px;
+    padding: 5px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: var(--font-body);
+    transition: all 0.15s;
+  }
+  #clear-btn:hover { border-color: var(--accent); color: var(--accent-light); }
+
+  /* ── Chat area ── */
+  #chat {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    scroll-behavior: smooth;
+  }
+
+  #chat::-webkit-scrollbar { width: 4px; }
+  #chat::-webkit-scrollbar-track { background: transparent; }
+  #chat::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+  /* ── Welcome screen ── */
+  .welcome {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    text-align: center;
+    gap: 14px;
+    padding: 32px 20px;
+  }
+
+  .welcome-icon {
+    width: 64px; height: 64px;
+    background: var(--accent-dim);
+    border: 1px solid rgba(59,130,246,0.3);
+    border-radius: 16px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 30px;
+  }
+
+  .welcome h2 {
+    font-family: var(--font-display);
+    font-size: 21px;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.02em;
+  }
+
+  .welcome h2 span.py { color: var(--accent-light); }
+
+  .welcome p {
+    font-size: 13px;
+    color: var(--text-muted);
+    line-height: 1.6;
+    max-width: 380px;
+  }
+
+  /* Topics chips row */
+  .topic-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: center;
+    margin: 4px 0 2px;
+  }
+
+  .topic-chip {
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    font-family: var(--font-code);
+  }
+
+  .starter-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    margin-top: 4px;
+  }
+
+  .starter-pill {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    font-size: 13px;
+    padding: 8px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: var(--font-body);
+    transition: all 0.15s;
+    text-align: left;
+  }
+  .starter-pill:hover {
+    border-color: var(--accent);
+    color: var(--accent-light);
+    background: var(--accent-dim);
+  }
+
+  /* ── Messages ── */
+  .msg {
+    display: flex;
+    gap: 10px;
+    max-width: 760px;
+    animation: fadeUp 0.18s ease-out;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .msg.user { align-self: flex-end; flex-direction: row-reverse; }
+  .msg.bot  { align-self: flex-start; }
+
+  .msg-avatar {
+    width: 30px; height: 30px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+    flex-shrink: 0;
+    margin-top: 3px;
+  }
+
+  .msg.bot  .msg-avatar { background: var(--accent-dim); border: 1px solid rgba(59,130,246,0.25); }
+  .msg.user .msg-avatar { background: var(--surface2); border: 1px solid var(--border); }
+
+  .msg-bubble {
+    padding: 10px 14px;
+    border-radius: 12px;
+    font-size: 14px;
+    line-height: 1.7;
+    max-width: 620px;
+    word-break: break-word;
+  }
+
+  .msg.bot  .msg-bubble {
+    background: var(--bot-bg);
+    border: 1px solid var(--border);
+    border-bottom-left-radius: 3px;
+    color: var(--text);
+  }
+
+  .msg.user .msg-bubble {
+    background: var(--user-bg);
+    border: 1px solid rgba(59,130,246,0.2);
+    border-bottom-right-radius: 3px;
+    color: var(--text);
+  }
+
+  /* ── Rich formatting ── */
+  .msg-bubble strong { font-weight: 500; color: var(--accent-light); }
+  .msg-bubble em { font-style: italic; color: var(--text-muted); }
+
+  /* Inline code */
+  .msg-bubble code {
+    font-family: var(--font-code);
+    font-size: 12.5px;
+    background: rgba(59,130,246,0.1);
+    padding: 1px 6px;
+    border-radius: 4px;
+    color: var(--accent-yellow);
+    border: 1px solid rgba(59,130,246,0.15);
+  }
+
+  /* Block code */
+  .code-block {
+    background: #0d1117;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin: 8px 0 4px;
+    overflow: hidden;
+  }
+
+  .code-block-header {
+    background: var(--surface2);
+    border-bottom: 1px solid var(--border);
+    padding: 5px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .code-lang {
+    font-size: 11px;
+    font-family: var(--font-code);
+    color: var(--accent-light);
+    font-weight: 500;
+  }
+
+  .copy-btn {
+    font-size: 11px;
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    padding: 2px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: var(--font-body);
+    transition: all 0.15s;
+  }
+  .copy-btn:hover { border-color: var(--accent); color: var(--accent-light); }
+  .copy-btn.copied { color: var(--accent-green); border-color: var(--accent-green); }
+
+  .code-block pre {
+    padding: 12px 14px;
+    overflow-x: auto;
+    font-family: var(--font-code);
+    font-size: 13px;
+    line-height: 1.6;
+    color: #c9d1d9;
+    margin: 0;
+    white-space: pre;
+  }
+
+  /* Simple Python syntax highlights */
+  .kw  { color: #ff7b72; }   /* keywords */
+  .fn  { color: #d2a8ff; }   /* functions */
+  .st  { color: #a5d6ff; }   /* strings */
+  .cm  { color: #8b949e; font-style: italic; } /* comments */
+  .nm  { color: #79c0ff; }   /* numbers */
+  .bi  { color: #ffa657; }   /* builtins */
+
+  /* ── Typing indicator ── */
+  .typing-indicator {
+    display: flex;
+    gap: 4px;
+    padding: 12px 14px;
+    align-items: center;
+  }
+  .typing-indicator span {
+    width: 5px; height: 5px;
+    background: var(--text-dim);
+    border-radius: 50%;
+    animation: bounce 1.2s infinite;
+  }
+  .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+  .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+
+  @keyframes bounce {
+    0%, 60%, 100% { transform: translateY(0); opacity: 0.35; }
+    30% { transform: translateY(-5px); opacity: 1; }
+  }
+
+  /* ── Input area ── */
+  .input-area {
+    border-top: 1px solid var(--border);
+    padding: 14px 24px 18px;
+    background: var(--surface);
+    flex-shrink: 0;
+  }
+
+  .input-row {
+    display: flex;
+    gap: 10px;
+    align-items: flex-end;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 9px 12px;
+    transition: border-color 0.15s;
+  }
+  .input-row:focus-within { border-color: rgba(59,130,246,0.5); }
+
+  #user-input {
+    flex: 1;
+    background: none;
+    border: none;
+    outline: none;
+    font-family: var(--font-body);
+    font-size: 14px;
+    color: var(--text);
+    resize: none;
+    line-height: 1.5;
+    max-height: 120px;
+    overflow-y: auto;
+  }
+  #user-input::placeholder { color: var(--text-dim); }
+
+  #send-btn {
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    background: var(--accent);
+    border: none;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.15s;
+    color: white;
+  }
+  #send-btn:hover { background: var(--accent-light); transform: scale(1.05); }
+  #send-btn:active { transform: scale(0.97); }
+  #send-btn:disabled { opacity: 0.3; cursor: not-allowed; transform: none; }
+
+  .input-hint {
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-top: 7px;
+    text-align: center;
+  }
+
+  /* ── API key warning ── */
+  .api-warning {
+    background: rgba(239,68,68,0.07);
+    border: 1px solid rgba(239,68,68,0.2);
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-size: 13px;
+    color: #f87171;
+    margin-bottom: 12px;
+    line-height: 1.55;
+  }
+  .api-warning code {
+    font-family: var(--font-code);
+    background: rgba(239,68,68,0.1);
+    padding: 1px 5px;
+    border-radius: 3px;
+  }
+  .api-warning a { color: #f87171; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="bot-avatar" id="bot-avatar">🐍</div>
+  <div class="bot-info">
+    <h1 id="bot-name">PyBot</h1>
+    <p><span class="status-dot"></span><span id="bot-status">Listo para programar</span></p>
+  </div>
+  <div class="header-right">
+    <span class="version-badge">Python 3.x</span>
+    <span class="subject-badge" id="subject-label">Python</span>
+    <button id="clear-btn" onclick="clearChat()">Nueva sesión</button>
+  </div>
+</header>
+
+<div id="chat">
+  <div class="welcome" id="welcome-screen">
+    <div class="welcome-icon" id="welcome-icon">🐍</div>
+    <h2>Hola, soy <span class="py" id="welcome-name">PyBot</span></h2>
+    <p id="welcome-desc">Tu tutor de Python para PrepaTec. No te voy a dar el código directo — pero sí te voy a ayudar a pensar como programador.</p>
+    <div class="topic-chips">
+      <span class="topic-chip">variables</span>
+      <span class="topic-chip">listas</span>
+      <span class="topic-chip">funciones</span>
+      <span class="topic-chip">bucles</span>
+      <span class="topic-chip">condicionales</span>
+      <span class="topic-chip">diccionarios</span>
+      <span class="topic-chip">clases</span>
+      <span class="topic-chip">archivos</span>
+    </div>
+    <div class="starter-pills" id="starters"></div>
+  </div>
+</div>
+
+<div class="input-area">
+  <div class="input-row">
+    <textarea id="user-input" placeholder="Pregúntame sobre Python..." rows="1" onkeydown="handleKey(event)"></textarea>
+    <button id="send-btn" onclick="sendMessage()" title="Enviar">
+      <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
+        <path d="M2 8L14 2L8 14L7 9L2 8Z" fill="currentColor"/>
+      </svg>
+    </button>
+  </div>
+  <p class="input-hint">Enter para enviar · Shift+Enter para nueva línea</p>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+//   PASO 1 — ELIGE TU PROVEEDOR DE IA
+//   Cambia el valor a: "claude", "openai" o "gemini"
+// ═══════════════════════════════════════════════════════════════
+
+const PROVIDER = "gemini"; // <-- cambia aquí: "claude" | "openai" | "gemini"
+
+// ═══════════════════════════════════════════════════════════════
+//   PASO 2 — PEGA TU API KEY DEL PROVEEDOR ELEGIDO
+//   IMPORTANTE: nunca compartas este archivo con la llave incluida
+//
+//   Claude  → https://console.anthropic.com
+//   OpenAI  → https://platform.openai.com/api-keys
+//   Gemini  → https://aistudio.google.com/apikey
+// ═══════════════════════════════════════════════════════════════
+
+const API_KEY = "TU_API_KEY_AQUI";
+
+// ═══════════════════════════════════════════════════════════════
+//   PASO 3 — CONFIGURACIÓN DEL CHATBOT
+// ═══════════════════════════════════════════════════════════════
+
+const CONFIG = {
+  botName: "PyBot",
+  subject: "Python",
+  subjectEmoji: "🐍",
+
+  starterQuestions: [
+    "¿Cuál es la diferencia entre una lista y una tupla?",
+    "No entiendo cómo funcionan los bucles for",
+    "¿Cómo defino una función con parámetros?",
+    "¿Qué es un diccionario y cuándo lo uso?",
+    "Mi código tiene un error, ¿me ayudas a encontrarlo?"
+  ],
+
+  // ─────────────────────────────────────────────────────────────
+  //   SYSTEM PROMPT — Diseñado en la Fase 2 del proyecto
+  // ─────────────────────────────────────────────────────────────
+  systemPrompt: `Eres PyBot, un tutor de programación en Python paciente y entusiasta para estudiantes de 6° semestre de preparatoria del Tec de Monterrey (PrepaTec) en México.
+
+Tu estilo de enseñanza:
+- Antes de explicar algo, preguntas qué entiende ya el estudiante para partir de ahí
+- Usas analogías del mundo real para explicar conceptos abstractos (por ejemplo: una lista es como una fila en la cafetería)
+- NUNCA escribes el código completo que el estudiante necesita para una tarea — en cambio, das fragmentos pequeños, pseudocódigo o pistas guiadas
+- Si hay un error en el código del estudiante, no lo corriges directamente: haces preguntas que los lleven a descubrirlo ("¿Qué crees que hace Python cuando llega a esa línea?")
+- Si alguien se frustra, los animas y divides el problema en partes más pequeñas
+- Siempre que muestres código, usa bloques formateados con triple backtick y el lenguaje (ejemplo: \`\`\`python)
+
+Temas que dominas (curso de Python para PrepaTec, 6° semestre):
+- Variables, tipos de datos y operadores
+- Entrada y salida (input, print)
+- Condicionales (if, elif, else)
+- Bucles (for, while, break, continue)
+- Listas, tuplas y conjuntos
+- Diccionarios
+- Funciones, parámetros y valores de retorno
+- Alcance de variables (scope)
+- Manejo de errores (try, except)
+- Lectura y escritura de archivos
+- Módulos básicos de la librería estándar (math, random, os)
+- Introducción a clases y objetos (POO básica)
+
+Reglas importantes:
+- Solo respondes preguntas relacionadas con Python o con programación en general a nivel introductorio
+- Si te preguntan sobre otro lenguaje, puedes hacer una analogía breve pero redirige a Python
+- Si alguien pide que hagas su tarea completa, te niegas amablemente y ofreces guiarlos paso a paso
+- Tus respuestas son claras y no muy largas; si necesitas mostrar código, que sea un ejemplo mínimo
+- Terminas la mayoría de tus explicaciones con una pregunta de verificación o un pequeño reto ("¿Puedes modificar este ejemplo para que imprima solo los números pares?")
+- Cuando un estudiante comparte código con un error, primero felicítalo por intentarlo antes de ayudarlo
+
+Personalidad: eres directo, positivo y te emociona genuinamente cuando alguien entiende un concepto por primera vez. Usas humor ligero ocasionalmente (ej: bromas sobre indentación o sobre los point-and-click fans que "nunca entendieron el for loop").`,
+};
+
+// ═══════════════════════════════════════════════════════════════
+//   ADAPTADORES DE API
+// ═══════════════════════════════════════════════════════════════
+
+const PROVIDERS = {
+  claude: {
+    label: "Claude (Anthropic)",
+    defaultModel: "claude-sonnet-4-20250514",
+    async call(history) {
+      const res = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": API_KEY,
+          "anthropic-version": "2023-06-01",
+          "anthropic-dangerous-direct-browser-access": "true"
+        },
+        body: JSON.stringify({
+          model: this.defaultModel,
+          max_tokens: 1024,
+          system: CONFIG.systemPrompt,
+          messages: history.map(m => ({ role: m.role, content: m.content }))
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error?.message || `HTTP ${res.status}`);
+      return data.content[0].text;
+    }
+  },
+
+  openai: {
+    label: "GPT (OpenAI)",
+    defaultModel: "gpt-4o-mini",
+    async call(history) {
+      const messages = [
+        { role: "system", content: CONFIG.systemPrompt },
+        ...history.map(m => ({
+          role: m.role === "bot" ? "assistant" : m.role,
+          content: m.content
+        }))
+      ];
+      const res = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${API_KEY}`
+        },
+        body: JSON.stringify({ model: this.defaultModel, max_tokens: 1024, messages })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error?.message || `HTTP ${res.status}`);
+      return data.choices[0].message.content;
+    }
+  },
+
+  gemini: {
+  label: "Gemini (Google)",
+  defaultModel: "gemini-2.5-flash-lite",
+    async call(history) {
+      const contents = history.map(m => ({
+        role: m.role === "user" ? "user" : "model",
+        parts: [{ text: m.content }]
+      }));
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${this.defaultModel}:generateContent?key=${API_KEY}`;
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          system_instruction: { parts: [{ text: CONFIG.systemPrompt }] },
+          contents,
+          generationConfig: { maxOutputTokens: 1024 }
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error?.message || `HTTP ${res.status}`);
+      return data.candidates[0].content.parts[0].text;
+    }
+  }
+};
+
+// ═══════════════════════════════════════════════════════════════
+//   RENDERIZADO DE MENSAJES CON SOPORTE DE BLOQUES DE CÓDIGO
+// ═══════════════════════════════════════════════════════════════
+
+function renderMessage(text) {
+  // Split on fenced code blocks: ```lang\ncode\n```
+  const parts = text.split(/(```[\s\S]*?```)/g);
+  return parts.map(part => {
+    if (part.startsWith('```')) {
+      // Extract language and code
+      const lines = part.slice(3).split('\n');
+      const lang = lines[0].trim() || 'python';
+      const code = lines.slice(1).join('\n').replace(/```$/, '').trimEnd();
+      const escaped = escapeCode(code);
+      const highlighted = lang === 'python' ? highlightPython(escaped) : escaped;
+      const id = 'cb_' + Math.random().toString(36).slice(2, 7);
+      return `<div class="code-block">
+        <div class="code-block-header">
+          <span class="code-lang">${escapeHtmlBasic(lang)}</span>
+          <button class="copy-btn" onclick="copyCode('${id}', this)">copiar</button>
+        </div>
+        <pre id="${id}">${highlighted}</pre>
+      </div>`;
+    }
+    // Regular text: apply inline markdown
+    return escapeHtmlBasic(part)
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*(.*?)\*/g, '<em>$1</em>')
+      .replace(/`([^`]+)`/g, '<code>$1</code>')
+      .replace(/\n/g, '<br>');
+  }).join('');
+}
+
+function escapeHtmlBasic(text) {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+function escapeCode(code) {
+  return code
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+function highlightPython(code) {
+  // Basic token-level highlighting (runs after HTML escaping)
+  const keywords = ['def','class','return','if','elif','else','for','while',
+    'in','not','and','or','is','import','from','as','pass','break',
+    'continue','try','except','finally','with','lambda','yield',
+    'True','False','None','raise','del','global','nonlocal','assert'];
+  const builtins = ['print','input','len','range','int','float','str',
+    'list','dict','tuple','set','bool','type','enumerate','zip',
+    'map','filter','sorted','reversed','open','append','extend',
+    'super','isinstance','hasattr','getattr'];
+
+  let result = code;
+
+  // Strings (single and double quoted, non-greedy)
+  result = result.replace(/(&#39;[^&#]*?&#39;|&quot;[^&]*?&quot;|'[^']*?'|"[^"]*?")/g,
+    m => `<span class="st">${m}</span>`);
+
+  // Comments
+  result = result.replace(/(#[^\n]*)/g, m => `<span class="cm">${m}</span>`);
+
+  // Numbers
+  result = result.replace(/\b(\d+\.?\d*)\b/g, m => `<span class="nm">${m}</span>`);
+
+  // Keywords (whole word only, not inside strings/comments already wrapped)
+  keywords.forEach(kw => {
+    result = result.replace(
+      new RegExp(`(?<!<[^>]*)\\b(${kw})\\b(?![^<]*>)`, 'g'),
+      `<span class="kw">$1</span>`
+    );
+  });
+
+  // Builtins
+  builtins.forEach(bi => {
+    result = result.replace(
+      new RegExp(`(?<!<[^>]*)\\b(${bi})\\b(?![^<]*>)`, 'g'),
+      `<span class="bi">$1</span>`
+    );
+  });
+
+  // Function definitions
+  result = result.replace(
+    /(<span class="kw">def<\/span>\s+)(\w+)/g,
+    `$1<span class="fn">$2</span>`
+  );
+
+  return result;
+}
+
+function copyCode(id, btn) {
+  const pre = document.getElementById(id);
+  if (!pre) return;
+  const text = pre.innerText;
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = '✓ copiado';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'copiar'; btn.classList.remove('copied'); }, 1800);
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════
+//   INICIALIZACIÓN
+// ═══════════════════════════════════════════════════════════════
+
+const provider = PROVIDERS[PROVIDER] || PROVIDERS.claude;
+let conversationHistory = [];
+
+document.getElementById('bot-name').textContent = CONFIG.botName;
+document.getElementById('welcome-name').textContent = CONFIG.botName;
+document.getElementById('subject-label').textContent = CONFIG.subject;
+document.getElementById('subject-label').title =
+  `Proveedor: ${provider.label} · Modelo: ${provider.defaultModel}`;
+
+// Starters
+const startersContainer = document.getElementById('starters');
+CONFIG.starterQuestions.forEach(q => {
+  const pill = document.createElement('button');
+  pill.className = 'starter-pill';
+  pill.textContent = q;
+  pill.onclick = () => { document.getElementById('user-input').value = q; sendMessage(); };
+  startersContainer.appendChild(pill);
+});
+
+// API key warning
+if (API_KEY === 'TU_API_KEY_AQUI') {
+  const links = {
+    claude: 'https://console.anthropic.com',
+    openai: 'https://platform.openai.com/api-keys',
+    gemini: 'https://aistudio.google.com/apikey'
+  };
+  const warning = document.createElement('div');
+  warning.className = 'api-warning';
+  warning.innerHTML = `⚠️ <strong>Falta la API Key para ${provider.label}.</strong> Abre este archivo HTML, busca <code>API_KEY = "TU_API_KEY_AQUI"</code> y pega tu llave. Obtenla en <a href="${links[PROVIDER]}" target="_blank">${links[PROVIDER]}</a>`;
+  document.getElementById('chat').insertBefore(warning, document.getElementById('welcome-screen'));
+}
+
+// ═══════════════════════════════════════════════════════════════
+//   LÓGICA DE CHAT
+// ═══════════════════════════════════════════════════════════════
+
+function addMessage(role, content) {
+  const welcome = document.getElementById('welcome-screen');
+  if (welcome) welcome.remove();
+  const chat = document.getElementById('chat');
+  const div = document.createElement('div');
+  div.className = `msg ${role}`;
+  const avatarContent = role === 'bot' ? CONFIG.subjectEmoji : '👤';
+  const bubbleContent = role === 'bot' ? renderMessage(content) : escapeHtmlBasic(content).replace(/\n/g, '<br>');
+  div.innerHTML = `
+    <div class="msg-avatar">${avatarContent}</div>
+    <div class="msg-bubble">${bubbleContent}</div>
+  `;
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+function showTyping() {
+  const chat = document.getElementById('chat');
+  const div = document.createElement('div');
+  div.className = 'msg bot'; div.id = 'typing';
+  div.innerHTML = `<div class="msg-avatar">${CONFIG.subjectEmoji}</div><div class="msg-bubble typing-indicator"><span></span><span></span><span></span></div>`;
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+function removeTyping() {
+  const t = document.getElementById('typing');
+  if (t) t.remove();
+}
+
+async function sendMessage() {
+  const input = document.getElementById('user-input');
+  const text = input.value.trim();
+  if (!text) return;
+
+  if (API_KEY === 'TU_API_KEY_AQUI') {
+    addMessage('bot', `Por favor configura tu API Key de ${provider.label} en el archivo para poder responder.`);
+    return;
+  }
+
+  input.value = '';
+  input.style.height = 'auto';
+  document.getElementById('send-btn').disabled = true;
+  document.getElementById('bot-status').textContent = 'Pensando...';
+
+  addMessage('user', text);
+  conversationHistory.push({ role: 'user', content: text });
+  showTyping();
+
+  try {
+    const reply = await provider.call(conversationHistory);
+    removeTyping();
+    conversationHistory.push({ role: 'assistant', content: reply });
+    addMessage('bot', reply);
+  } catch (err) {
+    removeTyping();
+    addMessage('bot', `Error con ${provider.label}: ${err.message}. Verifica tu API key e intenta de nuevo.`);
+  }
+
+  document.getElementById('send-btn').disabled = false;
+  document.getElementById('bot-status').textContent = 'Listo para programar';
+}
+
+function handleKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+  const ta = document.getElementById('user-input');
+  ta.style.height = 'auto';
+  ta.style.height = Math.min(ta.scrollHeight, 120) + 'px';
+}
+
+function clearChat() {
+  conversationHistory = [];
+  const chat = document.getElementById('chat');
+  chat.innerHTML = '';
+  const welcome = document.createElement('div');
+  welcome.className = 'welcome'; welcome.id = 'welcome-screen';
+  welcome.innerHTML = `
+    <div class="welcome-icon" id="welcome-icon">${CONFIG.subjectEmoji}</div>
+    <h2>Hola, soy <span class="py" id="welcome-name">${CONFIG.botName}</span></h2>
+    <p>Tu tutor de Python para PrepaTec. ¡Nueva sesión lista!</p>
+    <div class="topic-chips">
+      <span class="topic-chip">variables</span>
+      <span class="topic-chip">listas</span>
+      <span class="topic-chip">funciones</span>
+      <span class="topic-chip">bucles</span>
+      <span class="topic-chip">condicionales</span>
+      <span class="topic-chip">diccionarios</span>
+      <span class="topic-chip">clases</span>
+      <span class="topic-chip">archivos</span>
+    </div>
+    <div class="starter-pills" id="starters"></div>
+  `;
+  chat.appendChild(welcome);
+  const sc = document.getElementById('starters');
+  CONFIG.starterQuestions.forEach(q => {
+    const pill = document.createElement('button');
+    pill.className = 'starter-pill'; pill.textContent = q;
+    pill.onclick = () => { document.getElementById('user-input').value = q; sendMessage(); };
+    sc.appendChild(pill);
+  });
+}
+</script>
+</body>
+</html>
